@@ -15,21 +15,22 @@ namespace PugLifeSignUpBot.Classes
         public int MinimumEqItemLevel { get; set; }
         public string Date { get; set; }
         public string Time { get; set; }
+        public ulong CreatorDiscordId { get; set; }
         public List<RaidMember> MemberList { get; set; }
 
         public string GetTankCount()
         {
-            return MemberList.Where(m => m.Spec == "TANK").Count().ToString();
+            return MemberList.Where(m => m.Spec == "tank").Count().ToString();
         }
 
         public string GetDpsCount()
         {
-            return MemberList.Where(m => m.Spec == "DPS").Count().ToString();
+            return MemberList.Where(m => m.Spec == "dps").Count().ToString();
         }
 
         public string GetHealerCount()
         {
-            return MemberList.Where(m => m.Spec == "HEALING").Count().ToString();
+            return MemberList.Where(m => m.Spec == "healer").Count().ToString();
         }
     }
 }

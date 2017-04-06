@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,10 +12,13 @@ namespace PugLifeSignUpBot.Classes
     public static class WowHandler
     {
         private static WowExplorer _wowClient;
+        private static string tokenTextPathString = Directory.GetCurrentDirectory() + "\\Token.txt";
 
         public static void Setup()
         {
-            _wowClient = new WowExplorer(WowDotNetAPI.Region.EU, Locale.en_US, "ggruf2rsnfw3vd57nkatxcypat6wm8ux");
+            //ggruf2rsnfw3vd57nkatxcypat6wm8ux
+            string[] token = File.ReadAllLines(tokenTextPathString);
+            _wowClient = new WowExplorer(WowDotNetAPI.Region.EU, Locale.en_US, token[0]);
         }
 
         public static Character GetCharacter(string name,string realm,CharacterOptions options)

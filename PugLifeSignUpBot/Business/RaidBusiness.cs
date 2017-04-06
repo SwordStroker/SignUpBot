@@ -6,14 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using WowDotNetAPI.Models;
+using PugLifeSignUpBot.Handlers;
 
 namespace PugLifeSignUpBot.Classes
 {
     public abstract class RaidBusiness
     {
-        public static string raidFolderPathString = Directory.GetCurrentDirectory() + "\\Raids";
-        public static string raidTextPathString = raidFolderPathString + "\\Raids.txt";
-
         public static List<Raid> raidList;
 
         public static void AddRaid(string raidName, string raidDate, string raidTime, string name, string realm, string spec, int minimumEqItemLevel, string description, ulong discordId)
@@ -25,6 +23,7 @@ namespace PugLifeSignUpBot.Classes
                 Date = raidDate,
                 Time = raidTime,
                 MinimumEqItemLevel = minimumEqItemLevel,
+                CreatorDiscordId = discordId,
                 MemberList = new List<RaidMember>() { new RaidMember(name, realm, spec, discordId) }
             };
 
@@ -43,7 +42,7 @@ namespace PugLifeSignUpBot.Classes
             Character character = WowHandler.GetCharacter(characterName, realm, WowDotNetAPI.CharacterOptions.GetTalents | WowDotNetAPI.CharacterOptions.GetItems);
             if (character.Items.AverageItemLevelEquipped < raid.MinimumEqItemLevel)
                 return PrintMessage(string.Format("Your item eq level is {0}, raid's minimum is {1}..", character.Items.AverageItemLevelEquipped, raid.MinimumEqItemLevel));
-            raid.MemberList.Add(new RaidMember() { Name = character.Name, CharacterClass = character.Class, Realm = character.Realm, EqItemLevel = character.Items.AverageItemLevelEquipped, Spec = spec, DiscordId = discordId });
+            raid.MemberList.Add(new RaidMember() { Name = character.Name, CharacterClass = character.Class, Realm = character.Realm, EqItemLevel = character.Items.AverageItemLevelEquipped, Spec = spec.ToLower(), DiscordId = discordId });
             SaveRaids();
             return PrintMessage(characterName + " is successfully added to " + raid.Name);
         }
@@ -80,22 +79,6 @@ namespace PugLifeSignUpBot.Classes
             return val.ToStringTable(columns, a => a.Item1, a => a.Item2, a => a.Item3, a => a.Item4, a => a.Item5);
         }
 
-        public static void DirectoryCheck()
-        {
-            if (!Directory.Exists(raidFolderPathString))
-            {
-                Directory.CreateDirectory(raidFolderPathString);
-                File.CreateText(raidTextPathString);
-                raidList = new List<Raid>();
-            }
-            else
-            {
-                string[] files = Directory.GetFiles(raidFolderPathString);
-                string raids = File.ReadAllText(raidTextPathString);
-                raidList = JsonConvert.DeserializeObject<List<Raid>>(raids);
-            }
-        }
-
         public static string ShowAllRaids()
         {
             List<Tuple<string, string, string, int, string, string, string>> val = new List<Tuple<string, string, string, int, string, string, string>>();
@@ -110,7 +93,7 @@ namespace PugLifeSignUpBot.Classes
 
         private static void SaveRaids()
         {
-            File.WriteAllText(raidTextPathString, JsonConvert.SerializeObject(raidList));
+            DirectoryHandler.SaveRaids();
         }
 
         private static string PrintMessage(string message)
@@ -120,44 +103,74 @@ namespace PugLifeSignUpBot.Classes
 
         private static string CapitalizeFirstLetter(string s)
         {
-            if (String.IsNullOrEmpty(s))
+            if (string.IsNullOrEmpty(s))
                 return s;
             if (s.Length == 1)
                 return s.ToUpper();
             return s.Remove(1).ToUpper() + s.Substring(1);
         }
 
-        public static string ChangeDateOfRaid(string raidName,string newDate,ulong discordId)
+        public static string ChangeDateOfRaid(string raidName, string newDate, ulong discordId)
         {
             Raid raid = raidList.Find(r => r.Name == raidName);
             string oldDate = raid.Date;
             if (raid == null)
                 return PrintMessage("No raid named " + raidName + " found!");
 
-            if (raid.MemberList[0].DiscordId != discordId)
+            if (raid.CreatorDiscordId != discordId)
                 return PrintMessage("You are not allowed to change the date.");
 
             raid.Date = newDate;
+            SaveRaids();
             return PrintMessage(string.Format("{0} raid date is changed to {0} from {1}", newDate, oldDate));
         }
 
-        public static string ChangeTimeOfRaid(string raidName,string newTime,ulong discordId)
+        public static string ChangeTimeOfRaid(string raidName, string newTime, ulong discordId)
         {
             Raid raid = raidList.Find(r => r.Name == raidName);
             string oldTime = raid.Time;
             if (raid == null)
                 return PrintMessage("No raid named " + raidName + " found!");
 
-            if (raid.MemberList[0].DiscordId != discordId)
+            if (raid.CreatorDiscordId != discordId)
                 return PrintMessage("You are not allowed to change the date.");
 
             raid.Date = newTime;
+            SaveRaids();
             return PrintMessage(string.Format("{0} raid date is changed to {0} from {1}", newTime, oldTime));
         }
 
-        public static string CheckGuldanAchi(string characterName,string realm)
+        public static string ChangeMinimumILvlOfRaid(string raidName, int newILvl, ulong discordId)
+        {
+            Raid raid = raidList.Find(r => r.Name == raidName);
+            int oldILvl = raid.MinimumEqItemLevel;
+            if (raid == null)
+                return PrintMessage("No raid named " + raidName + " found!");
+
+            if (raid.CreatorDiscordId != discordId)
+                return PrintMessage("You are not allowed to change the eq ilvl.");
+
+            raid.MinimumEqItemLevel = newILvl;
+            SaveRaids();
+            return PrintMessage(string.Format("{0} raid Minimum Eq ILvl is changed to {0} from {1}", newILvl, oldILvl));
+        }
+
+        public static string CheckGuldanAchi(string characterName, string realm)
         {
             return WowHandler.CheckGuldanCurveAchievement(characterName, realm) ? "He has it" : "He doesnt";
+        }
+
+        public static string CancelRaid(string raidName, ulong discordId,string userName)
+        {
+            Raid raid = raidList.Find(r => r.Name == raidName);
+            if (raid == null)
+                return PrintMessage("No raid named " + raidName + " found!");
+            if (raid.CreatorDiscordId != discordId)
+                return PrintMessage("You are not allowed to cancel the raid.");
+
+            raidList.Remove(raid);
+            SaveRaids();
+            return PrintMessage(string.Format("{0} has been succesfully canceled by {1}", raidName, userName));
         }
     }
 }

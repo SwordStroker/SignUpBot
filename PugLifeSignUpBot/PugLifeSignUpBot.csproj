@@ -69,11 +69,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\Raid.cs" />
-    <Compile Include="Classes\RaidBusiness.cs" />
-    <Compile Include="Classes\RaidMember.cs" />
-    <Compile Include="Classes\TableParser.cs" />
-    <Compile Include="Classes\WowHandler.cs" />
+    <Compile Include="Handlers\DirectoryHandler.cs" />
+    <Compile Include="Models\Raid.cs" />
+    <Compile Include="Business\RaidBusiness.cs" />
+    <Compile Include="Models\RaidMember.cs" />
+    <Compile Include="Utility\TableParser.cs" />
+    <Compile Include="Handlers\WowHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using PugLifeSignUpBot.Classes;
+using PugLifeSignUpBot.Handlers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,13 +28,13 @@ namespace PugLifeSignUpBot
 
 
             WowHandler.Setup();
-            RaidBusiness.DirectoryCheck();
+            DirectoryHandler.DirectoryCheck();
 
             _client = new DiscordClient(x =>
             {
                 x.AppName = "PugLifeSignBot";
                 x.AppUrl = "";
-                x.LogLevel = LogSeverity.Info;
+                x.LogLevel = LogSeverity.Verbose;
                 x.LogHandler = Log;
             });
 
@@ -136,12 +137,27 @@ namespace PugLifeSignUpBot
                     await e.Channel.SendMessage(RaidBusiness.ChangeTimeOfRaid(e.GetArg("raidName"), e.GetArg("newTime"), e.User.Id));
                 });
 
+            cService.CreateCommand("changeraideqilvl")
+                .Parameter("raidName", ParameterType.Required)
+                .Parameter("newILvl", ParameterType.Required)
+                .Do(async (e) =>
+                {
+                    await e.Channel.SendMessage(RaidBusiness.ChangeMinimumILvlOfRaid(e.GetArg("raidName"), int.Parse(e.GetArg("newILvl")), e.User.Id));
+                });
+
             cService.CreateCommand("checkguldan")
                 .Parameter("characterName", ParameterType.Required)
                 .Parameter("realm", ParameterType.Required)
                 .Do(async (e) =>
                 {
                     await e.Channel.SendMessage(RaidBusiness.CheckGuldanAchi(e.GetArg("characterName"), e.GetArg("realm")));
+                });
+
+            cService.CreateCommand("cancelraid")
+                .Parameter("raidName", ParameterType.Required)
+                .Do(async (e) =>
+                {
+                    await e.Channel.SendMessage(RaidBusiness.CancelRaid(e.GetArg("raidName"), e.User.Id, e.User.Name));
                 });
         }
     }
