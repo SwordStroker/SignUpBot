@@ -60,7 +60,7 @@ namespace PugLifeSignUpBot.Classes
 
             raid.MemberList.Remove(raidMember);
             SaveRaids();
-            return PrintMessage(characterName + " is successfully canceled the " + raid.Name + " raid");
+            return PrintMessage(characterName + " is successfully removed from " + raid.Name + " raid");
         }
 
         public static string ShowRaid(string raidName)
@@ -83,10 +83,10 @@ namespace PugLifeSignUpBot.Classes
         {
             List<Tuple<string, string, string, int, string, string, string>> val = new List<Tuple<string, string, string, int, string, string, string>>();
 
-            string[] columns = { "RaidName", "Date", "Time", "MinEqILvl", "DPS", "Tank", "Healer" };
+            string[] columns = { "RaidName", "Date", "Time", "MinEqILvl", "Tank", "Dps", "Healer" };
             foreach (var raid in raidList)
             {
-                val.Add(new Tuple<string, string, string, int, string, string, string>(raid.Name, raid.Date, raid.Time, raid.MinimumEqItemLevel, raid.GetDpsCount(), raid.GetTankCount(), raid.GetHealerCount()));
+                val.Add(new Tuple<string, string, string, int, string, string, string>(raid.Name, raid.Date, raid.Time, raid.MinimumEqItemLevel, raid.GetTankCount(), raid.GetDpsCount(), raid.GetHealerCount()));
             }
             return val.ToStringTable(columns, a => a.Item1, a => a.Item2, a => a.Item3, a => a.Item4, a => a.Item5, a => a.Item6, a => a.Item7);
         }

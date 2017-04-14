@@ -52,8 +52,6 @@ namespace PugLifeSignUpBot
             {
                 await _client.Connect(token, TokenType.Bot);
             });
-
-
         }
 
         private void ErrorLog(object sender, CommandErrorEventArgs e)
@@ -95,54 +93,52 @@ namespace PugLifeSignUpBot
                     await e.Channel.SendMessage("`" + RaidBusiness.ShowAllRaids() + "`");
                 });
 
-            cService.CreateCommand("signtoraid")
-                .Parameter("raidName", ParameterType.Required)
+            cService.CreateCommand("signup")
                 .Parameter("characterName", ParameterType.Required)
                 .Parameter("realm", ParameterType.Required)
                 .Parameter("spec", ParameterType.Required)
                 .Do(async (e) =>
                 {
-                    await e.Channel.SendMessage(RaidBusiness.AddRaidMember(e.GetArg("raidName"), e.GetArg("characterName"), e.GetArg("realm"), e.GetArg("spec"), e.User.Id));
+                    await e.Channel.SendMessage(RaidBusiness.AddRaidMember(e.Channel.Name, e.GetArg("characterName"), e.GetArg("realm"), e.GetArg("spec"), e.User.Id));
                 });
 
             cService.CreateCommand("showraid")
-                .Parameter("raidName")
+                .Parameter("raidName",ParameterType.Optional)
                 .Do(async (e) =>
                 {
-                    await e.Channel.SendMessage("`" + RaidBusiness.ShowRaid(e.GetArg("raidName")) + "`");
+                    string raidName = e.GetArg("raidName");
+                    raidName = string.IsNullOrEmpty(raidName) ? e.Channel.Name : raidName;
+                    await  e.Channel.SendMessage("`" + RaidBusiness.ShowRaid(raidName) + "`");
+                    dsa();
                 });
 
             cService.CreateCommand("cancelsignup")
-                .Parameter("raidName", ParameterType.Required)
                 .Parameter("name", ParameterType.Required)
                 .Parameter("realm", ParameterType.Required)
                 .Do(async (e) =>
                 {
-                    await e.Channel.SendMessage(RaidBusiness.DeleteRaidMember(e.GetArg("raidName"), e.GetArg("name"), e.GetArg("realm"), e.User.Id));
+                    await e.Channel.SendMessage(RaidBusiness.DeleteRaidMember(e.Channel.Name, e.GetArg("name"), e.GetArg("realm"), e.User.Id));
                 });
 
             cService.CreateCommand("changeraiddate")
-                .Parameter("raidName", ParameterType.Required)
                 .Parameter("newDate", ParameterType.Required)
                 .Do(async (e) =>
                 {
-                    await e.Channel.SendMessage(RaidBusiness.ChangeDateOfRaid(e.GetArg("raidName"), e.GetArg("newDate"), e.User.Id));
+                    await e.Channel.SendMessage(RaidBusiness.ChangeDateOfRaid(e.Channel.Name, e.GetArg("newDate"), e.User.Id));
                 });
 
             cService.CreateCommand("changeraidtime")
-                .Parameter("raidName", ParameterType.Required)
                 .Parameter("newTime", ParameterType.Required)
                 .Do(async (e) =>
                 {
-                    await e.Channel.SendMessage(RaidBusiness.ChangeTimeOfRaid(e.GetArg("raidName"), e.GetArg("newTime"), e.User.Id));
+                    await e.Channel.SendMessage(RaidBusiness.ChangeTimeOfRaid(e.Channel.Name, e.GetArg("newTime"), e.User.Id));
                 });
 
             cService.CreateCommand("changeraideqilvl")
-                .Parameter("raidName", ParameterType.Required)
                 .Parameter("newILvl", ParameterType.Required)
                 .Do(async (e) =>
                 {
-                    await e.Channel.SendMessage(RaidBusiness.ChangeMinimumILvlOfRaid(e.GetArg("raidName"), int.Parse(e.GetArg("newILvl")), e.User.Id));
+                    await e.Channel.SendMessage(RaidBusiness.ChangeMinimumILvlOfRaid(e.Channel.Name, int.Parse(e.GetArg("newILvl")), e.User.Id));
                 });
 
             cService.CreateCommand("checkguldan")
@@ -154,11 +150,21 @@ namespace PugLifeSignUpBot
                 });
 
             cService.CreateCommand("cancelraid")
-                .Parameter("raidName", ParameterType.Required)
+                .Parameter("raidName", ParameterType.Optional)
                 .Do(async (e) =>
                 {
-                    await e.Channel.SendMessage(RaidBusiness.CancelRaid(e.GetArg("raidName"), e.User.Id, e.User.Name));
+                    string raidName = e.GetArg("raidName");
+                    raidName = string.IsNullOrEmpty(raidName) ? e.Channel.Name : raidName;
+                    await e.Channel.SendMessage(RaidBusiness.CancelRaid(raidName, e.User.Id, e.User.Name));
                 });
+        }
+
+        private void dsa ()
+        {
+            foreach (var item in _client.Servers)
+            {
+                Console.WriteLine(item.Name);
+            }
         }
     }
 }
