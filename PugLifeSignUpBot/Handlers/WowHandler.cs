@@ -12,7 +12,7 @@ namespace PugLifeSignUpBot.Classes
     public static class WowHandler
     {
         private static WowExplorer _wowClient;
-        private static string tokenTextPathString = Directory.GetCurrentDirectory() + "\\Token.txt";
+        private static string tokenTextPathString = Directory.GetCurrentDirectory() + "\\WowToken.txt";
 
         public static void Setup()
         {

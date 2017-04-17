@@ -16,7 +16,7 @@ namespace PugLifeSignUpBot
     class Program
     {
         private DiscordClient _client;
-
+        private string tokenTextPathString = Directory.GetCurrentDirectory() + "\\DiscordToken.txt";
         static void Main(string[] args)
         {
             new Program().Start();
@@ -24,8 +24,7 @@ namespace PugLifeSignUpBot
 
         public void Start()
         {
-            var token = "Mjk3MzEzMTE0OTg1MzMyNzM2.C8Bo9A.CqlPQoVxJATcFs-wvdeQfGHWskg";
-
+            string token = File.ReadAllLines(tokenTextPathString)[0];
 
             WowHandler.Setup();
             DirectoryHandler.DirectoryCheck();
@@ -47,11 +46,23 @@ namespace PugLifeSignUpBot
             });
 
             CreateCommands();
+            _client.Ready += _client_Ready;
+            _client.ServerAvailable += _client_ServerAvailable;
 
             _client.ExecuteAndWait(async () =>
             {
                 await _client.Connect(token, TokenType.Bot);
             });
+        }
+
+        private void _client_ServerAvailable(object sender, ServerEventArgs e)
+        {
+            Console.WriteLine(string.Format("[{0}] [{1}]", "SERVER", e.Server.Name));
+        }
+
+        private void _client_Ready(object sender, EventArgs e)
+        {
+            Console.WriteLine(string.Format("[{0}] [{1}]", "INFO", "Bot is Ready"));
         }
 
         private void ErrorLog(object sender, CommandErrorEventArgs e)
@@ -103,13 +114,12 @@ namespace PugLifeSignUpBot
                 });
 
             cService.CreateCommand("showraid")
-                .Parameter("raidName",ParameterType.Optional)
+                .Parameter("raidName", ParameterType.Optional)
                 .Do(async (e) =>
                 {
                     string raidName = e.GetArg("raidName");
                     raidName = string.IsNullOrEmpty(raidName) ? e.Channel.Name : raidName;
-                    await  e.Channel.SendMessage("`" + RaidBusiness.ShowRaid(raidName) + "`");
-                    dsa();
+                    await e.Channel.SendMessage("`" + RaidBusiness.ShowRaid(raidName) + "`");
                 });
 
             cService.CreateCommand("cancelsignup")
@@ -157,14 +167,34 @@ namespace PugLifeSignUpBot
                     raidName = string.IsNullOrEmpty(raidName) ? e.Channel.Name : raidName;
                     await e.Channel.SendMessage(RaidBusiness.CancelRaid(raidName, e.User.Id, e.User.Name));
                 });
-        }
 
-        private void dsa ()
-        {
-            foreach (var item in _client.Servers)
-            {
-                Console.WriteLine(item.Name);
-            }
+            cService.CreateCommand("sendinvites")
+                .Parameter("raidName", ParameterType.Optional)
+                .Do(async (e) =>
+                {
+                    string raidName = e.GetArg("raidName");
+                    raidName = string.IsNullOrEmpty(raidName) ? e.Channel.Name : raidName;
+                    int raidIsVail = RaidBusiness.CheckRaidAndPermission(raidName, e.User.Id);
+                    if (raidIsVail == 0)
+                    {
+                        Classes.Raid raid = RaidBusiness.GetRaid(raidName);
+                        foreach (Server server in _client.Servers)
+                        {
+                            foreach (RaidMember member in raid.MemberList)
+                            {
+                                User _user = server.GetUser(member.DiscordId);
+                                if (_user != null)
+                                    await _user.SendMessage("Raid is starting man");
+                            }
+                        }
+                        await e.Channel.SendMessage(RaidBusiness.PrintMessage("Invites are sent."));
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage(RaidBusiness.PrintMessage(string.Format("No raid named {0} found or you dont have the permission", raidName)));
+                    }
+                });
         }
+        
     }
 }

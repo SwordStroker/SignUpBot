@@ -23,7 +23,7 @@ namespace PugLifeSignUpBot.Classes
             Name = character.Name;
             Realm = character.Realm;
             EqItemLevel = character.Items.AverageItemLevelEquipped;
-            Spec = spec;
+            Spec = spec.ToLower();
             CharacterClass = character.Class;
             DiscordId = discordId;
         }

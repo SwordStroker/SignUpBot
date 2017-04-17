@@ -96,7 +96,7 @@ namespace PugLifeSignUpBot.Classes
             DirectoryHandler.SaveRaids();
         }
 
-        private static string PrintMessage(string message)
+        public static string PrintMessage(string message)
         {
             return "`" + message + "`";
         }
@@ -155,12 +155,26 @@ namespace PugLifeSignUpBot.Classes
             return PrintMessage(string.Format("{0} raid Minimum Eq ILvl is changed to {0} from {1}", newILvl, oldILvl));
         }
 
+        internal static bool CheckRaid(string raidName)
+        {
+            Raid raid = raidList.Find(r => r.Name == raidName);
+            return raid != null;
+        }
+
+        internal static int CheckRaidAndPermission(string raidName,ulong discordId)
+        {
+            Raid raid = raidList.Find(r => r.Name == raidName);
+            if (raid == null) return -1;
+            if (raid.CreatorDiscordId != discordId) return -2;
+            return 0;
+        }
+
         public static string CheckGuldanAchi(string characterName, string realm)
         {
             return WowHandler.CheckGuldanCurveAchievement(characterName, realm) ? "He has it" : "He doesnt";
         }
 
-        public static string CancelRaid(string raidName, ulong discordId,string userName)
+        public static string CancelRaid(string raidName, ulong discordId, string userName)
         {
             Raid raid = raidList.Find(r => r.Name == raidName);
             if (raid == null)
@@ -171,6 +185,11 @@ namespace PugLifeSignUpBot.Classes
             raidList.Remove(raid);
             SaveRaids();
             return PrintMessage(string.Format("{0} has been succesfully canceled by {1}", raidName, userName));
+        }
+
+        public static Raid GetRaid(string raidName)
+        {
+            return raidList.Find(r => r.Name == raidName);
         }
     }
 }
