@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using WowDotNetAPI.Models;
 using PugLifeSignUpBot.Handlers;
+using PugLifeSignUpBot.Utility;
 
 namespace PugLifeSignUpBot.Classes
 {
@@ -14,8 +15,10 @@ namespace PugLifeSignUpBot.Classes
     {
         public static List<Raid> raidList;
 
-        public static void AddRaid(string raidName, string raidDate, string raidTime, string name, string realm, string spec, int minimumEqItemLevel, string description, ulong discordId)
+        public static int AddRaid(string raidName, string raidDate, string raidTime, string name, string realm, string spec, int minimumEqItemLevel, string description, ulong discordId)
         {
+            if (CheckRaid(raidName)) return -1;
+            if (!Const.Specs.Contains(spec)) return -2;
             Raid raid = new Raid()
             {
                 Name = raidName,
@@ -29,6 +32,7 @@ namespace PugLifeSignUpBot.Classes
 
             raidList.Add(raid);
             SaveRaids();
+            return 0;
         }
 
         public static string AddRaidMember(string raidName, string characterName, string realm, string spec, ulong discordId)
@@ -39,6 +43,8 @@ namespace PugLifeSignUpBot.Classes
             RaidMember raidMember = raid.MemberList.Find(r => r.Name == CapitalizeFirstLetter(characterName));
             if (raidMember != null)
                 return PrintMessage("You are already added to this raid.");
+            if (!Const.Specs.Contains(spec.ToLower()))
+                return PrintMessage("Please specify your role correctly.{Tank,MDps,RDps,Healer}");
             Character character = WowHandler.GetCharacter(characterName, realm, WowDotNetAPI.CharacterOptions.GetTalents | WowDotNetAPI.CharacterOptions.GetItems);
             if (character.Items.AverageItemLevelEquipped < raid.MinimumEqItemLevel)
                 return PrintMessage(string.Format("Your item eq level is {0}, raid's minimum is {1}..", character.Items.AverageItemLevelEquipped, raid.MinimumEqItemLevel));
@@ -81,14 +87,14 @@ namespace PugLifeSignUpBot.Classes
 
         public static string ShowAllRaids()
         {
-            List<Tuple<string, string, string, int, string, string, string>> val = new List<Tuple<string, string, string, int, string, string, string>>();
+            List<Tuple<string, string, string, int, string, string, string, Tuple<string>>> val = new List<Tuple<string, string, string, int, string, string, string, Tuple<string>>>();
 
-            string[] columns = { "RaidName", "Date", "Time", "MinEqILvl", "Tank", "Dps", "Healer" };
+            string[] columns = { "RaidName", "Date", "Time", "MinEqILvl", "Tank", "MDps", "RDps", "Healer" };
             foreach (var raid in raidList)
             {
-                val.Add(new Tuple<string, string, string, int, string, string, string>(raid.Name, raid.Date, raid.Time, raid.MinimumEqItemLevel, raid.GetTankCount(), raid.GetDpsCount(), raid.GetHealerCount()));
+                val.Add(new Tuple<string, string, string, int, string, string, string, Tuple<string>>(raid.Name, raid.Date, raid.Time, raid.MinimumEqItemLevel, raid.GetTankCount(), raid.GetMDpsCount(), raid.GetRDpsCount(), new Tuple<string>(raid.GetHealerCount())));
             }
-            return val.ToStringTable(columns, a => a.Item1, a => a.Item2, a => a.Item3, a => a.Item4, a => a.Item5, a => a.Item6, a => a.Item7);
+            return val.ToStringTable(columns, a => a.Item1, a => a.Item2, a => a.Item3, a => a.Item4, a => a.Item5, a => a.Item6, a => a.Item7, a => a.Rest.Item1);
         }
 
         private static void SaveRaids()
@@ -161,7 +167,7 @@ namespace PugLifeSignUpBot.Classes
             return raid != null;
         }
 
-        internal static int CheckRaidAndPermission(string raidName,ulong discordId)
+        internal static int CheckRaidAndPermission(string raidName, ulong discordId)
         {
             Raid raid = raidList.Find(r => r.Name == raidName);
             if (raid == null) return -1;
@@ -190,6 +196,20 @@ namespace PugLifeSignUpBot.Classes
         public static Raid GetRaid(string raidName)
         {
             return raidList.Find(r => r.Name == raidName);
+        }
+
+        public static string ShowMyRaids(string characterName,string realm)
+        {
+            string[] columns = { "RaidName", "Date", "Time", "Spec" };
+
+            List<Tuple<string, string, string, string>> val = new List<Tuple<string, string, string, string>>();
+            foreach (var raid in raidList)
+            {
+                RaidMember member = raid.MemberList.Find(m => m.Name == characterName && m.Realm == realm);
+                if (member != null)
+                    val.Add(new Tuple<string, string, string, string>(raid.Name, raid.Date, raid.Time, member.Spec));
+            }
+            return val.Count <= 0 ? "You are not signed to any raid" : val.ToStringTable(columns, a => a.Item1, a => a.Item2, a => a.Item3, a => a.Item4);
         }
     }
 }

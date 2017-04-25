@@ -26,7 +26,10 @@ namespace PugLifeSignUpBot.Handlers
             {
                 string[] files = Directory.GetFiles(raidFolderPathString);
                 string raids = File.ReadAllText(raidTextPathString);
-                RaidBusiness.raidList = JsonConvert.DeserializeObject<List<Raid>>(raids);
+                if (!string.IsNullOrEmpty(raids))
+                    RaidBusiness.raidList = JsonConvert.DeserializeObject<List<Raid>>(raids);
+                else
+                    RaidBusiness.raidList = new List<Raid>();
             }
         }
 

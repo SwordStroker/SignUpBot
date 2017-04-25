@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PugLifeSignUpBot.Utility;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,17 +21,22 @@ namespace PugLifeSignUpBot.Classes
 
         public string GetTankCount()
         {
-            return MemberList.Where(m => m.Spec == "tank").Count().ToString();
+            return MemberList.Where(m => m.Spec == Const.SPEC_TANK).Count().ToString();
         }
 
-        public string GetDpsCount()
+        public string GetMDpsCount()
         {
-            return MemberList.Where(m => m.Spec == "dps").Count().ToString();
+            return MemberList.Where(m => m.Spec == Const.SPEC_MDPS).Count().ToString();
+        }
+
+        public string GetRDpsCount()
+        {
+            return MemberList.Where(m => m.Spec == Const.SPEC_RDPS).Count().ToString();
         }
 
         public string GetHealerCount()
         {
-            return MemberList.Where(m => m.Spec == "healer").Count().ToString();
+            return MemberList.Where(m => m.Spec == Const.SPEC_HEALER).Count().ToString();
         }
     }
 }

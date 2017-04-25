@@ -73,6 +73,7 @@
     <Compile Include="Models\Raid.cs" />
     <Compile Include="Business\RaidBusiness.cs" />
     <Compile Include="Models\RaidMember.cs" />
+    <Compile Include="Utility\Const.cs" />
     <Compile Include="Utility\TableParser.cs" />
     <Compile Include="Handlers\WowHandler.cs" />
     <Compile Include="Program.cs" />

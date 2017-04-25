@@ -85,20 +85,37 @@ namespace PugLifeSignUpBot
                 .Parameter("raidName", ParameterType.Required)
                 .Parameter("date", ParameterType.Required)
                 .Parameter("time", ParameterType.Required)
-                .Parameter("name", ParameterType.Required)
+                .Parameter("characterName", ParameterType.Required)
                 .Parameter("realm", ParameterType.Required)
                 .Parameter("spec", ParameterType.Required)
                 .Parameter("minimumilvl", ParameterType.Required)
                 .Parameter("description", ParameterType.Required)
                 .Do(async (e) =>
                 {
-                    RaidBusiness.AddRaid(e.GetArg("raidName"), e.GetArg("date"), e.GetArg("time"), e.GetArg("name"), e.GetArg("realm"), e.GetArg("spec"), int.Parse(e.GetArg("minimumilvl")), e.GetArg("description"), e.User.Id);
-                    await e.Channel.SendMessage(string.Format("`Raid {0} has been created successfully by {1}`", e.GetArg("raidName"), e.User.Name));
-                    Channel newc = await e.Channel.Server.CreateChannel(e.GetArg("raidName"), ChannelType.Text);
-                    await newc.SendMessage("`" + e.GetArg("description") + "`");
+                    string raidName = e.GetArg("raidName");
+                    string date = e.GetArg("date");
+                    string time = e.GetArg("time");
+                    string characterName = e.GetArg("characterName");
+                    string realm = e.GetArg("realm");
+                    string spec = e.GetArg("spec");
+                    int minilvl = int.Parse(e.GetArg("minimumilvl"));
+                    string desc = e.GetArg("description");
+
+                    int result = RaidBusiness.AddRaid(raidName, date, time, characterName, realm, spec, minilvl, desc, e.User.Id);
+                    if (result == -1)
+                        await e.Channel.SendMessage(RaidBusiness.PrintMessage(string.Format("There is a raid already named {0}", raidName)));
+                    else if (result == -2)
+                        await e.Channel.SendMessage(RaidBusiness.PrintMessage("Please specify your role correctly.{Tank,MDps,RDps,Healer}"));
+                    else
+                    {
+                        await e.Channel.SendMessage(string.Format("`Raid {0} has been created successfully by {1}`", e.GetArg("raidName"), e.User.Name));
+                        Channel newc = await e.Channel.Server.CreateChannel(e.GetArg("raidName"), ChannelType.Text);
+                        await newc.SendMessage("`" + e.GetArg("description") + "`");
+                    }
                 });
 
             cService.CreateCommand("showallraids")
+                .Description("This command will show all the raids.")
                 .Do(async (e) =>
                 {
                     await e.Channel.SendMessage("`" + RaidBusiness.ShowAllRaids() + "`");
@@ -108,6 +125,7 @@ namespace PugLifeSignUpBot
                 .Parameter("characterName", ParameterType.Required)
                 .Parameter("realm", ParameterType.Required)
                 .Parameter("spec", ParameterType.Required)
+                .Description("Use the signup command in the text channel of the raid.\n e.g. !signup Cthraxxi Silvermoon MDps")
                 .Do(async (e) =>
                 {
                     await e.Channel.SendMessage(RaidBusiness.AddRaidMember(e.Channel.Name, e.GetArg("characterName"), e.GetArg("realm"), e.GetArg("spec"), e.User.Id));
@@ -125,6 +143,7 @@ namespace PugLifeSignUpBot
             cService.CreateCommand("cancelsignup")
                 .Parameter("name", ParameterType.Required)
                 .Parameter("realm", ParameterType.Required)
+                .Description("Use the cancelsignup command in the text channel of the raid. \n e.g. !cancelsignup Cthraxxi Silvermoon")
                 .Do(async (e) =>
                 {
                     await e.Channel.SendMessage(RaidBusiness.DeleteRaidMember(e.Channel.Name, e.GetArg("name"), e.GetArg("realm"), e.User.Id));
@@ -151,13 +170,13 @@ namespace PugLifeSignUpBot
                     await e.Channel.SendMessage(RaidBusiness.ChangeMinimumILvlOfRaid(e.Channel.Name, int.Parse(e.GetArg("newILvl")), e.User.Id));
                 });
 
-            cService.CreateCommand("checkguldan")
-                .Parameter("characterName", ParameterType.Required)
-                .Parameter("realm", ParameterType.Required)
-                .Do(async (e) =>
-                {
-                    await e.Channel.SendMessage(RaidBusiness.CheckGuldanAchi(e.GetArg("characterName"), e.GetArg("realm")));
-                });
+            //cService.CreateCommand("checkguldan")
+            //    .Parameter("characterName", ParameterType.Required)
+            //    .Parameter("realm", ParameterType.Required)
+            //    .Do(async (e) =>
+            //    {
+            //        await e.Channel.SendMessage(RaidBusiness.CheckGuldanAchi(e.GetArg("characterName"), e.GetArg("realm")));
+            //    });
 
             cService.CreateCommand("cancelraid")
                 .Parameter("raidName", ParameterType.Optional)
@@ -184,7 +203,7 @@ namespace PugLifeSignUpBot
                             {
                                 User _user = server.GetUser(member.DiscordId);
                                 if (_user != null)
-                                    await _user.SendMessage("Raid is starting man");
+                                    await _user.SendMessage("Raid will start shortly.");
                             }
                         }
                         await e.Channel.SendMessage(RaidBusiness.PrintMessage("Invites are sent."));
@@ -194,7 +213,18 @@ namespace PugLifeSignUpBot
                         await e.Channel.SendMessage(RaidBusiness.PrintMessage(string.Format("No raid named {0} found or you dont have the permission", raidName)));
                     }
                 });
+
+            cService.CreateCommand("myraids")
+                .Parameter("characterName", ParameterType.Required)
+                .Parameter("realm", ParameterType.Required)
+                .Do(async (e) =>
+                {
+                    string characterName = e.GetArg("characterName");
+                    string realm = e.GetArg("realm");
+
+                    await e.Channel.SendMessage(RaidBusiness.ShowMyRaids(characterName, realm));
+                });
         }
-        
+
     }
 }
